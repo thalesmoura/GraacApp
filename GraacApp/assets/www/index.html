@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gerenciador de Tarefas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="css/bootstrap.css" rel="stylesheet" media="screen" />
+<script src="js/jquery-1.10.2.js" type="text/javascript"></script>
+<script src="js/bootstrap.js" type="text/javascript"></script>
+<script src="cordova.js" type="text/javascript"></script>
+<script src="js/javascript.js" type="text/javascript"></script>
+</head>
+<body>
+
+	<!-- INICIO CONTAINER -->
+	<div class="container" align="center">
+
+		<!-- HEADER -->
+		<div class="page-header">
+			<h2>
+				<p class="text-primary">Gerenciador de Atividades</p>
+			</h2>
+			
+			<!-- 
+			<img src="img/logo.png" class="img-responsive" alt="Responsive image">
+			 -->
+			
+		</div>
+
+		<!-- BOTAO INSCREVER -->
+		<button class="btn btn-primary" data-toggle="modal"
+			data-target="#modalInscrever">
+			<span class="glyphicon glyphicon-plus-sign"></span> Inscrever-se
+		</button>
+		<br /> <br />
+
+		<!-- FORM -->
+		<form role="form">
+			<div class="form-group">
+				<label for="inputLogin">Login</label>
+				<div class="input-group">
+				<span class="input-group-addon">@</span></span>
+				<input class="form-control" id="inputLogin" type="text" value="" placeholder="Digite seu Login">
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="inputSenha">Senha</label>
+				<div class="input-group">
+				<span class="input-group-addon"><span class="glyphicon glyphicon-asterisk"></span></span> 
+				<input type="password" class="form-control" id="inputSenha" placeholder="Senha">
+				</div>
+			</div>
+			<button type="button" onclick="logar()" class="btn btn-primary">
+				<span class="glyphicon glyphicon-ok-sign"></span> Entrar
+			</button>
+		</form>
+		
+		<br />
+
+		<!-- MODAL INSCREVER -->
+		<div class="modal fade" id="modalInscrever" tabindex="-1"
+			role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-hidden="true">&times;</button>
+						<h4 class="modal-title">Inscrever-se</h4>
+					</div>
+					<div class="modal-body">
+						<form role="form">
+							<div class="form-group">
+								<label for="inputNomeUsuario">Nome do Usuário</label> 
+								<div class="input-group">
+								<span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
+								<input type="text" class="form-control" id="inputNomeUsuario" placeholder="Digite seu nome completo" style="background-color: white;"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="inputEmail">Email</label> 
+								<div class="input-group">
+								<span class="input-group-addon"><span class="glyphicon glyphicon-envelope"></span></span>
+								<input type="email" class="form-control" id="inputEmail" placeholder="Digite seu email"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="inputLogin">Login</label> 
+								<div class="input-group">
+								<span class="input-group-addon">@</span>
+								<input type="text" class="form-control" id="inputLoginCadastro" placeholder="Digite seu Login"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="inputSenha">Senha</label> 
+								<div class="input-group">
+								<span class="input-group-addon"><span class="glyphicon glyphicon-asterisk"></span></span>
+								<input type="password" class="form-control" id="inputSenhaCadastro" placeholder="Senha"/>
+								</div>
+								<p class="help-block">*A senha deve conter no minimo 5
+									caracteres e no maximo 10 caracteres*</p>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-primary btn-sm" data-dismiss="modal" onclick="zerarCamposForm()">
+							<span class="glyphicon glyphicon-remove-sign"></span> Cancelar
+						</button>
+						<button type="button" onclick="cadastrarUsuario()" class="btn btn-primary btn-sm">
+							<span class="glyphicon glyphicon-plus-sign"></span> Cadastrar
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<hr>
+
+		<!-- FOOTER -->
+		<div class="page-footer" align="center">
+			<h4>
+				<p class="text-primary">Tiago Guerra & Thales Moura <span class="glyphicon glyphicon-copyright-mark"></span> 2014</p>
+			</h4>
+		</div>
+
+	</div>
+
+</body>
+</html>
