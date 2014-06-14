@@ -110,6 +110,7 @@ function logar() {
 function clickProjeto(id) {
 	
 	window.location.href = 'telaTarefa.html';
+	
 	projetoAtualID = id;
 }
 
@@ -541,8 +542,7 @@ function carregarGrupos() {
 //=======================
 function carregarGrpDB(tx) {
 	tx.executeSql('SELECT GRUPOS.ID_GRUPO AS IDG, GRUPOS.DESCRICAO DESC, GRUPO_CONTATO.IDCONTATO AS IDGC '
-							+ 'FROM GRUPOS INNER JOIN GRUPO_CONTATO ON GRUPOS.ID_GRUPO = GRUPO_CONTATO.IDGRUPO '
-							+ 'GROUP BY GRUPOS.ID_GRUPO', [], carregarGrpSuccess);
+							+ 'FROM GRUPOS INNER JOIN GRUPO_CONTATO ON GRUPOS.ID_GRUPO = GRUPO_CONTATO.IDGRUPO', [], carregarGrpSuccess);
 }
 //CARREGAR TABELA-TELA GRUPO SUCESS
 //=======================
@@ -639,7 +639,7 @@ function buscaSuccess(contacts) {
 										+ "<td>"+contactNumber+"</td>"
 										+ "<td><div class='btn-group'>" 
 										+ "<button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarContato' id='"+contacts[i].id+"' onclick='preencheAlterarC(this.id)'><span class='glyphicon glyphicon-edit'>"
-										+ "<button type='button' class='btn btn-danger btn-xs' id='"+contacts[i].id+"' onclick='excluirContato(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
+										+ "<button type='button' class='btn btn-danger btn-xs' id='"+contacts[i].id+"' onclick='confirmaExcluirContato(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
 				$("#tabelaContatos2 tbody").append("<tr><td><input type='checkbox' value="+contacts[i].id+"></td>" 
 						+ "<td>"+contacts[i].displayName+"</td><td>"+contactNumber+"</td><td>");
 				$("#tabelaContatos3 tbody").append("<tr><td><input type='checkbox' value="+contacts[i].id+"></td>" 
@@ -650,9 +650,18 @@ function buscaSuccess(contacts) {
 
 
 
+//CONFIRMA EXCLUIR GRUPO
+//=======================
+var idConEx = '';
+function confirmaExcluirContato(idC) {
+	idConEx = idC;
+	if (confirm('Tem certeza que deixa excluir?')) {
+		excluirContato();
+	}
+}
 // EXCLUIR CONTATO
 // =======================
-function excluirContato(idC) {
+function excluirContato() {
 	var options = new ContactFindOptions();
 	options.filter = "";
 	options.multiple = true;
@@ -661,16 +670,16 @@ function excluirContato(idC) {
 }
 //EXCLUIR CONTATO SUCCESS
 //=======================
-var idCont = '';
 var idConAlt = '';
 function excluirSuccess(contacts) {
 	for (var i = 0; i < contacts.length; i++) {
-		if (idCont == contacts[i].id) {
+		if (idConEx == contacts[i].id) {
 			contacts[i].remove();
+			alert(contacts[i].id);
 		}
-		atualizar = new String("excluirContato");
-		atualizarPagina();
 	}
+	atualizar = new String("excluirContato");
+	atualizarPagina();
 }
 
 
@@ -728,54 +737,27 @@ function validarAlterarContato() {
 // ALTERAR CONTATO
 //=======================
 function alterarContato(){ 
-	myContact = navigator.contacts.create();
+	var myContact = navigator.contacts.create();
 	myContact.id = idConAlt;
-	myContact.displayName = document.getElementById('inputAlterarContato').value;
-	myContact.phoneNumbers = document.getElementById('inputAlterarNumContato').value;
+	myContact.remove();
 	
-	/*var phoneNumbers = [];
+	novoContato();
+}
+// NOVO CONTATO
+//=======================
+function novoContato() {
+	var myContact = navigator.contacts.create();
+	myContact.displayName = document.getElementById('inputAlterarContato').value;
+	myContact.nickname = document.getElementById('inputAlterarContato').value;
+
+	var phoneNumbers = [];
 	phoneNumbers[0] = new ContactField('Celular', document.getElementById('inputAlterarNumContato').value, true);
 	myContact.phoneNumbers = phoneNumbers;
-		
-	myContact.save(onAltSuccess(myContact), onError);
-	
-	atualizar = new String("alterarContato");
-	atualizarPagina();*/
-	
-	alert('myContact.displayName ' + myContact.displayName);	
-	alert('myContact.phoneNumbers ' + myContact.phoneNumbers);
-	
-	myContact.displayName = new ContactField('Celular', document.getElementById('inputAlterarContato').value, true);
-	alert('passou displayName');
-	myContact.phoneNumbers = new ContactField('Celular', document.getElementById('inputAlterarNumContato').value, true);
-	alert('passou Number');
-	/*myContact.phoneNumbers= phoneNumbers;*/
-	
 
-	myContact.modify(onSuccess(myContact), onError);
-	
-		/*var contactNumber = '';
-		if (myContact.phoneNumbers != null){
-			
-			contactNumber = myContact.phoneNumbers;
-	
-		document.getElementById("inputAlterarContato").value = myContact.displayName;
-		document.getElementById("inputAlterarNumContato").value = contactNumber;
-		alert('contactNumber2' + contactNumber);
-		}*/
-/*	for (var i = 0; i < myContact.length; i++) {
-		alert('entrou no for');
-		
-	}
-*/	
-		
-	/*myContact.modify(onAltSuccess(myContact), onError);*/
-	alert('passou Modify');
-	atualizar = new String("alterarContato");
+	myContact.save(onSuccess(myContact), onError);
+	atualizar = new String("adicionarContato");
 	atualizarPagina();
-	
 }
-
 
 
 
