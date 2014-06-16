@@ -1,11 +1,8 @@
 /**
  * ---- JAVASCRIPT VERSAO 1.2.8
- * Estudar DOM 
- * CARREGAR OS NOMES DOS INTEGRANTES DOS GRUPOS NO MODAL DE INCLUIR PROJETO 
- * Excluir - contato parou
+ * CARREGAR OS NOMES DOS INTEGRANTES DOS GRUPOS NO MODAL DE INCLUIR PROJETO
  * Validar campos - (contatos selecionados no alterar projeto)
- * VALIDA«√O DE PROJETO/GRUPO - REVER 
- * Alterar contatos
+ * VALIDA«√O DE PROJETO/GRUPO - REVER
  * Abrir as tarefas do projeto
  * Cadastrar Usu·rio 
  * ValidaÁ„o Tela de login 
@@ -467,7 +464,7 @@ function alterarProjetoDB(tx) {
 	var protejoDescricao = new String(document.getElementById('inputAlterarProjeto').value);
 	var grupoDescricao = new String(document.getElementById('inputAlterarGrupo').value);
 	tx.executeSql('UPDATE PROJETOS SET DESCRICAO = "'+protejoDescricao+'" WHERE ID_PROJETO = "'+idProAlt+'";');
-	tx.executeSql('UPDATE GRUPOS SET DESCRICAO = "'+grupoDescricao+'" WHERE ID_GRUPO = "'+idProAlt+'";');
+	tx.executeSql('UPDATE GRUPOS SET DESCRICAO = "'+grupoDescricao+'" WHERE ID_GRUPO = "'+idGruAlt+'";');
 	atualizar = new String("alterarProjeto");
 	atualizarPagina();
 }
@@ -532,6 +529,9 @@ function excluirGrupoContato() {
 function excluirGrupoContatoDB(tx) {
 	tx.executeSql('DELETE FROM GRUPO_CONTATO WHERE IDGRUPO="' + idGruEx + '"');
 }
+
+
+
 // CARREGAR TABELA-TELA GRUPO
 // =======================
 function carregarGrupos() {
@@ -541,19 +541,19 @@ function carregarGrupos() {
 //CARREGAR TABELA-TELA GRUPO DB
 //=======================
 function carregarGrpDB(tx) {
-	tx.executeSql('SELECT GRUPOS.ID_GRUPO AS IDG, GRUPOS.DESCRICAO DESC, GRUPO_CONTATO.IDCONTATO AS IDGC '
-							+ 'FROM GRUPOS INNER JOIN GRUPO_CONTATO ON GRUPOS.ID_GRUPO = GRUPO_CONTATO.IDGRUPO', [], carregarGrpSuccess);
+	tx.executeSql('SELECT GRUPOS.ID_GRUPO AS IDG, GRUPOS.DESCRICAO DESC FROM GRUPOS', [], carregarGrpSuccess);
+	//tx.executeSql('SELECT GRUPOS.ID_GRUPO AS IDG, GRUPOS.DESCRICAO DESC, GRUPO_CONTATO.IDCONTATO AS IDGC FROM GRUPOS INNER JOIN GRUPO_CONTATO ON GRUPOS.ID_GRUPO = GRUPO_CONTATO.IDGRUPO group by GRUPOS.ID_GRUPO', [], carregarGrpSuccess);
 }
 //CARREGAR TABELA-TELA GRUPO SUCESS
 //=======================
 function carregarGrpSuccess(tx, results) {
-	var len = results.rows.length;
+	var len = results.rows.length;		
 	if (len > 0) {
 		for (var i = 0; i < len; i++) {
 			$("#tabelaGrupos tbody").append("<tr><td><input type='checkbox' value='"+results.rows.item(i).IDG+"'></td>"
 									+ "<td>"+results.rows.item(i).DESC+"</td>"
 									+ "<td></td>"
-									+ "<td>"+results.rows.item(i).IDG+"</td>"
+									+ "<td>G-ID " +results.rows.item(i).IDG+"</td>"
 									+ "<td><button type='button' class='btn btn-danger btn-xs' id='"+results.rows.item(i).IDG+"'onclick='confirmaExcluirGrupo(this.id)'>"
 									+ "<span class='glyphicon glyphicon-trash'></span></button></td></tr>");
 		}
@@ -841,20 +841,8 @@ function buscaError() {
 
 
 
-
-// CADASTRAR USUARIO
-// =======================
-function cadastrarUsuario() {
-	// window.openDatabase(nome, vers√£o, nome de exibi√ß√£o, tamanho);
-	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
-	db.transaction(cadastrarUsuarioDB);
-}
-// Fun√ß√£o de login TELA INDEX
-// =======================
-function cadastrarUsuarioDB(tx) {
-	atualizar = new String("cadastrarUsuario");
-	var nomeUsuario = new String(
-			document.getElementById('inputNomeUsuario').value);
+function validarUsuario() {
+	var nomeUsuario = new String(document.getElementById('inputNomeUsuario').value);
 	var email = new String(document.getElementById('inputEmail').value);
 	var login = new String(document.getElementById('inputLoginCadastro').value);
 	var senha = new String(document.getElementById('inputSenhaCadastro').value);
@@ -874,17 +862,36 @@ function cadastrarUsuarioDB(tx) {
 			document.getElementById("inputSenhaCadastro").focus();
 		}
 		campoObrigatorio();
-	} else {
-		// tx.executeSql('DROP TABLE IF EXISTS CADASTRO_USUARIO');
-		// tx.executeSql('INSERT INTO CONTATOS (DESCRICAO) VALUES ("' +
-		// descricaoGrupo + '")');
-
-		tx.executeSql('INSERT INTO CADASTRA_USUARIO (NOME, EMAIL, LOGIN, SENHA) VALUES ("'+nomeUsuario+'", "'+email+'", "'+login+'", "'+senha+'")');
+	} else {		
+		cadastrarUsuario();
+		
+		atualizar = new String("cadastrarUsuario");
 		atualizarPagina();
-		successCadastroUsuarioCB();
 	}
-
 }
+
+
+
+// CADASTRAR USUARIO
+// =======================
+function cadastrarUsuario() {
+	// window.openDatabase(nome, vers√£o, nome de exibi√ß√£o, tamanho);
+	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
+	db.transaction(cadastrarUsuarioDB, errorCB, successCadastroUsuarioCB());
+}
+// Fun√ß√£o de login TELA INDEX
+// =======================
+function cadastrarUsuarioDB(tx) {
+	var nomeUsuario = new String(document.getElementById('inputNomeUsuario').value);
+	var email = new String(document.getElementById('inputEmail').value);
+	var login = new String(document.getElementById('inputLoginCadastro').value);
+	var senha = new String(document.getElementById('inputSenhaCadastro').value);
+	
+	tx.executeSql('INSERT INTO CADASTRA_USUARIO (NOME, EMAIL, LOGIN, SENHA) VALUES ("'+nomeUsuario+'", "'+email+'", "'+login+'", "'+senha+'")');
+}
+
+
+
 // ***SELECT TELA INDEX
 // =======================
 function selectIndexDB() {
