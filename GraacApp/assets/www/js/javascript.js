@@ -1,5 +1,5 @@
 /**
- * ---- JAVASCRIPT VERSAO 1.2.8
+ * ---- JAVASCRIPT VERSAO 1.2.9
  * CARREGAR OS NOMES DOS INTEGRANTES DOS GRUPOS NO MODAL DE INCLUIR PROJETO
  * Validar campos - (contatos selecionados no alterar projeto)
  * VALIDAÇÃO DE PROJETO/GRUPO - REVER
@@ -65,12 +65,6 @@ function atualizarPagina() {
 					var url = "telaTarefa.html";
 					$(window.document.location).attr('href', url);
 				}
-
-				/*
-				 * $("#salvarContato").click(function(){
-				 * alert('AAsalvarContato'); var url = "telaContato.html";
-				 * $(window.document.location).attr('href',url); });
-				 */
 			});
 }
 
@@ -97,7 +91,7 @@ function criarRelacionarTabelasDB(tx) {
 // LOGAR
 // =======================
 function logar() {
-	window.location.href = 'telaTarefa.html';
+	window.location.href = 'telaProjeto.html';
 }
 
 
@@ -105,12 +99,15 @@ function logar() {
 // CARREGA AS TAREFAS DO PROJETO SELECIONADO NO CLICK, implementar corretamente
 //=======================
 function clickProjeto(id) {
-	
 	window.location.href = 'telaTarefa.html';
 	
 	projetoAtualID = id;
 }
-
+// CHECK DA TAREFA
+////=======================
+function checkTarefa(id) {
+	
+}
 
 
 // ***VALIDAR TAREFA
@@ -166,7 +163,9 @@ function carregarTarefSuccess(tx, results) {
 	var len = results.rows.length;
 	if (len > 0) {
 		for (var i = 0; i < len; i++) {
-			$("#tabelaTarefas tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' onclick='checkTarefa'><span class='glyphicon glyphicon-ok'></span></button></td>"
+			$("#tabelaTarefas tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' id='"
+					+ results.rows.item(i).ID_TAREFA
+					+ "' onclick='checkTarefa(this.id)'><span class='glyphicon glyphicon-ok'></span></button></td>"
 									+ "<td>" + results.rows.item(i).DESCRICAO + "</td>"
 									+ "<td>" + results.rows.item(i).PRAZO_FINAL + "</td>"
 									+ "<td>" + results.rows.item(i).ID_TAREFA + "</td>"
@@ -670,7 +669,6 @@ function excluirContato() {
 }
 //EXCLUIR CONTATO SUCCESS
 //=======================
-var idConAlt = '';
 function excluirSuccess(contacts) {
 	for (var i = 0; i < contacts.length; i++) {
 		if (idConEx == contacts[i].id) {
@@ -686,6 +684,7 @@ function excluirSuccess(contacts) {
 
 // PREENCHER ALTERAR CONTATO-MODAL
 //=======================
+var idConAlt = '';
 function preencheAlterarC(idAltC) {
 	idConAlt = idAltC;
 	buscaContato();
@@ -890,38 +889,3 @@ function cadastrarUsuarioDB(tx) {
 	tx.executeSql('INSERT INTO CADASTRA_USUARIO (NOME, EMAIL, LOGIN, SENHA) VALUES ("'+nomeUsuario+'", "'+email+'", "'+login+'", "'+senha+'")');
 }
 
-
-
-// ***SELECT TELA INDEX
-// =======================
-function selectIndexDB() {
-	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
-	db.transaction(queryIndexDB);
-}
-// TELA INDEX
-// =======================
-function queryIndexDB(tx) {
-	tx.executeSql('SELECT * FROM CADASTRO_USUARIO', [], querySuccessIndex,
-			errorCB);
-}
-// TELA INDEX
-// =======================
-function querySuccessIndex(tx, results) {
-	var len = results.rows.length;
-	navigator.notification.alert('Quantidade de Rows inseridas: ' + len);
-	if (len > 0) {
-		for (var i = 0; i < len; i++) {
-			navigator.notification.alert(' id: ' + results.rows.item(i).id
-					+ ' email: ' + results.rows.item(i).email + ' login: '
-					+ results.rows.item(i).login + ' senha: '
-					+ results.rows.item(i).senha);
-		}
-	}
-}
-
-// ***ConfiguraÃ§Ã£o do CONFIRM
-// =======================
-/*
- * $.confirm.options = { text: "Tem certeza que deixa excluir?", title:
- * "NOTIFICAO", confirmButton: "Ok", cancelButton: "Cancelar", post: false }
- */
