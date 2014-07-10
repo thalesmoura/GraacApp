@@ -1,5 +1,5 @@
 /**
- * ---- JAVASCRIPT VERSAO 1.2.9
+ * ---- JAVASCRIPT VERSAO 1.2.12
  * CARREGAR OS NOMES DOS INTEGRANTES DOS GRUPOS NO MODAL DE INCLUIR PROJETO
  * Validar campos - (contatos selecionados no alterar projeto)
  * VALIDAÇÃO DE PROJETO/GRUPO - REVER
@@ -19,11 +19,10 @@
 
 
 document.addEventListener("deviceready", onDeviceReady, false);
-
-var projetoAtualID = '1';
+//Usar 8 para trazer a tarefa de teste8
+var projetoAtualID = '0';
 var atualizar;
-
-//Id para manipular o excluir, editar e etc.
+var salvarTarefaProjeto = false;
 
 
 
@@ -31,7 +30,7 @@ var atualizar;
 //=======================
 function onDeviceReady() {
 	criarRelacionarTabelas();
-	carregarTarefas();
+	//carregarTarefas();
 	carregarProjetos();
 	carregarContato();
 	carregarGrupos();
@@ -62,8 +61,10 @@ function atualizarPagina() {
 				} else if (atualizar == "inserirTarefa"
 						|| atualizar == "alterarTarefa"
 						|| atualizar == "excluirTarefa") {
-					var url = "telaTarefa.html";
+					var url = "telaProjeto.html";					
 					$(window.document.location).attr('href', url);
+					//carregarTarefas();
+					
 				}
 			});
 }
@@ -84,30 +85,135 @@ function criarRelacionarTabelasDB(tx) {
 	tx.executeSql('CREATE TABLE IF NOT EXISTS TAREFAS(ID_TAREFA INTEGER PRIMARY KEY AUTOINCREMENT, DESCRICAO VARCHAR(100) NOT NULL, OBSERVACAO VARCHAR(200), PRAZO_FINAL TEXT NOT NULL, IDPROJETO INTEGER NOT NULL, FOREIGN KEY (IDPROJETO) REFERENCES PROJETOS (ID_PROJETO) )');
 	tx.executeSql('CREATE TABLE IF NOT EXISTS GRUPO_CONTATO(IDGRUPO INTEGER NOT NULL, IDCONTATO INTEGER NOT NULL, PRIMARY KEY (IDGRUPO, IDCONTATO), FOREIGN KEY (IDGRUPO) REFERENCES GRUPO (ID_GRUPO), FOREIGN KEY (IDCONTATO) REFERENCES PROJETOS (ID_CONTATO) )');
 	tx.executeSql('CREATE TABLE IF NOT EXISTS SUBTAREFAS(ID_SUBTAREFA INTEGER PRIMARY KEY AUTOINCREMENT, DESCRICAO VARCHAR(100), IDTAREFA NOT NULL, FOREIGN KEY (IDTAREFA) REFERENCES TAREFAS (ID_TAREFA) )');
+	tx.executeSql('CREATE TABLE IF NOT EXISTS IDENTIFICADOR_PROJETO (ID_PROJETO INTEGER PRIMARY KEY)');
 }
 
 
 
 // LOGAR
 // =======================
-function logar() {
+function logar() {	
 	window.location.href = 'telaProjeto.html';
 }
 
 
-
+//AQUII
 // CARREGA AS TAREFAS DO PROJETO SELECIONADO NO CLICK, implementar corretamente
 //=======================
 function clickProjeto(id) {
-	window.location.href = 'telaTarefa.html';
-	
-	projetoAtualID = id;
+	projetoAtualID = id;		
+	nomeProjeto();
+	carregarTarefasDoProjeto();
 }
-// CHECK DA TAREFA
-////=======================
-function checkTarefa(id) {
-	
+function carregarTarefasDoProjeto() {
+	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
+	db.transaction(carregarTarefasDoProjetoDB);	
 }
+function carregarTarefasDoProjetoDB(tx) {
+	tx.executeSql('SELECT ID_TAREFA, DESCRICAO, OBSERVACAO, PRAZO_FINAL, IDPROJETO FROM TAREFAS WHERE IDPROJETO = "' + projetoAtualID + '"', [], carregarTarefasDoProjetoSuccess);	
+}
+function carregarTarefasDoProjetoSuccess(tx, results) {	
+	$("#divTarefasProjetosPai").show();	
+	$("#divProjetosPai").hide();		
+	
+	document.getElementById('tituloPrj').innerHTML = nomePrj;
+		var len = results.rows.length;		
+		if (len > 0) {
+			for (var i = 0; i < len; i++) {
+				$("#tabelaTarefasProjeto tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' onclick='checkTarefa'><span class='glyphicon glyphicon-ok'></span></button></td>"
+										+ "<td>" + results.rows.item(i).DESCRICAO + "</td>"
+										+ "<td>" + results.rows.item(i).PRAZO_FINAL + "</td>"
+										+ "<td><div class='btn-group'>"
+										+ "<button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarTarefa' id='"
+										+ results.rows.item(i).ID_TAREFA
+										+ "' onclick='preencheAlterarT(this.id)'><span class='glyphicon glyphicon-edit'></span></button>"
+										+ "<button type='button' class='btn btn-danger btn-xs' id='"
+										+ results.rows.item(i).ID_TAREFA
+										+ "' onclick='confirmaExcluirTarefa(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
+			}
+		}			
+}
+var nomePrj = "";
+function nomeProjeto() {
+	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
+	db.transaction(nomeProjetoDB);
+}
+function nomeProjetoDB(tx) {
+	tx.executeSql('SELECT DESCRICAO FROM PROJETOS WHERE ID_PROJETO = "' + projetoAtualID + '"', [], nomeProjetoSuccess);	
+}
+function nomeProjetoSuccess(tx, results) {
+	var len = results.rows.length;
+	if (len > 0) {
+		for (var i = 0; i < len; i++) {
+			nomePrj = results.rows.item(i).DESCRICAO;
+		}
+	}
+}
+
+function preencherSalvarTarefaProjeto(){
+	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
+	db.transaction(preencherSalvarTarefaProjetoDB);
+}
+	
+//Selecionar o ID armazenado no banco, no momento do salvar, para que quando ocorrer o refresh, eu não perca o valor do meu ID
+//=======================
+function preencherSalvarTarefaProjetoDB(tx) {
+	tx.executeSql('SELECT ID_PROJETO FROM IDENTIFICADOR_PROJETO ', [], preencherSalvarTarefaProjetoDBSuccess);	
+}
+//Setando ID armazenado no banco no meu ID [projetoAtualID]
+//=======================
+function preencherSalvarTarefaProjetoDBSuccess(tx, results) {
+	var len = results.rows.length;	
+	if (len > 0) {		
+		for (var i = 0; i < len; i++) {						
+			projetoAtualID = results.rows.item(i).ID_PROJETO;
+			//alert('FEZ SELECT BANCO'+projetoAtualID);	
+		}
+		tx.executeSql('DELETE FROM IDENTIFICADOR_PROJETO WHERE 1 = 1');
+		nomeProjeto();
+		carregarTarefasAoSalvarExcluir();
+	}
+			
+}
+
+
+
+function carregarTarefasAoSalvarExcluir() {
+	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
+	db.transaction(carregarTarefasAoSalvarExcluirDB);
+}
+// Carrega a tarefa no momento que salva mesmo dps do Onready, direcionando para a div de tarefas, ao invés do projeto
+//=======================
+function carregarTarefasAoSalvarExcluirDB(tx) {		
+	tx.executeSql('SELECT ID_TAREFA, DESCRICAO, OBSERVACAO, PRAZO_FINAL, IDPROJETO FROM TAREFAS WHERE IDPROJETO = "' + projetoAtualID + '"', [], carregarTarefasAoSalvarExcluirSuccess);
+}
+// Carrega a tarefa no momento que salva mesmo dps do Onready, direcionando para a div de tarefas, ao invés do projeto
+//=======================
+function carregarTarefasAoSalvarExcluirSuccess(tx, results) {
+	$("#divTarefasProjetosPai").show();	
+	$("#divProjetosPai").hide();
+	document.getElementById('tituloPrj').innerHTML = nomePrj;
+	//alert('carregarTarefaAoSalvar() projetoAtualID= '+projetoAtualID);
+	var len = results.rows.length;
+	if (len > 0) {
+		for (var i = 0; i < len; i++) {
+			$("#tabelaTarefasProjeto tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' onclick='checkTarefa'><span class='glyphicon glyphicon-ok'></span></button></td>"
+									+ "<td>" + results.rows.item(i).DESCRICAO + "</td>"
+									+ "<td>" + results.rows.item(i).PRAZO_FINAL + "</td>"
+									+ "<td><div class='btn-group'>"
+									+ "<button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarTarefa' id='"
+									+ results.rows.item(i).ID_TAREFA
+									+ "' onclick='preencheAlterarT(this.id)'><span class='glyphicon glyphicon-edit'></span></button>"
+									+ "<button type='button' class='btn btn-danger btn-xs' id='"
+									+ results.rows.item(i).ID_TAREFA
+									+ "' onclick='confirmaExcluirTarefa(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
+		}
+	}	
+}
+
+
+
+
 
 
 // ***VALIDAR TAREFA
@@ -134,9 +240,12 @@ function validarTarefa() {
 }
 // ***INSERT TAREFA
 // =======================
-function inserirTarefa() {
+function inserirTarefa(id) {
+	//alert("inserirTarefa Id: "+id);
+	//alert("inserirTarefa ProjetoAtualId:"+projetoAtualID);
 	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
 	db.transaction(inserirTarefaDB, errorCB, successCB());
+	
 }
 //INSERIR TAREFA DB
 function inserirTarefaDB(tx) {
@@ -145,6 +254,7 @@ function inserirTarefaDB(tx) {
 	var prazo = new String(document.getElementById('inputPrazo').value);
 
 	tx.executeSql('INSERT INTO TAREFAS (DESCRICAO, OBSERVACAO, PRAZO_FINAL, IDPROJETO) VALUES ("' + descricao + '", "' + observacao + '", "' + prazo + '", "' + projetoAtualID + '")');
+	tx.executeSql('INSERT INTO IDENTIFICADOR_PROJETO (ID_PROJETO) VALUES ("' + projetoAtualID + '")');			
 }
 // CARREGA TABELA-TELA TAREFAS
 // =======================
@@ -154,22 +264,18 @@ function carregarTarefas() {
 }
 // CARREGAR TABELA-TELA TAREFAS DB
 //=======================
-function carregarTarefDB(tx) {
+function carregarTarefDB(tx) {		
 	tx.executeSql('SELECT ID_TAREFA, DESCRICAO, OBSERVACAO, PRAZO_FINAL, IDPROJETO FROM TAREFAS WHERE IDPROJETO = "' + projetoAtualID + '"', [], carregarTarefSuccess);
 }
 // CARREGAR TABELA-TELA TAREFAS SUCESS
 //=======================
-function carregarTarefSuccess(tx, results) {
+function carregarTarefSuccess(tx, results) {	
 	var len = results.rows.length;
 	if (len > 0) {
 		for (var i = 0; i < len; i++) {
-			$("#tabelaTarefas tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' id='"
-					+ results.rows.item(i).ID_TAREFA
-					+ "' onclick='checkTarefa(this.id)'><span class='glyphicon glyphicon-ok'></span></button></td>"
+			$("#tabelaTarefasProjeto tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' onclick='checkTarefa'><span class='glyphicon glyphicon-ok'></span></button></td>"
 									+ "<td>" + results.rows.item(i).DESCRICAO + "</td>"
 									+ "<td>" + results.rows.item(i).PRAZO_FINAL + "</td>"
-									+ "<td>" + results.rows.item(i).ID_TAREFA + "</td>"
-									+ "<td>" + results.rows.item(i).IDPROJETO + "</td>"
 									+ "<td><div class='btn-group'>"
 									+ "<button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarTarefa' id='"
 									+ results.rows.item(i).ID_TAREFA
@@ -178,7 +284,7 @@ function carregarTarefSuccess(tx, results) {
 									+ results.rows.item(i).ID_TAREFA
 									+ "' onclick='confirmaExcluirTarefa(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
 		}
-	}
+	}	
 }
 
 
@@ -202,8 +308,9 @@ function excluirTarefa() {
 }
 // EXCLUIR TAREFA DB
 //=======================
-function excluirTarefaDB(tx) {
+function excluirTarefaDB(tx) {	
 	tx.executeSql('DELETE FROM TAREFAS WHERE ID_TAREFA = "' + idTarEx + '"');
+	tx.executeSql('INSERT INTO IDENTIFICADOR_PROJETO (ID_PROJETO) VALUES ("' + projetoAtualID + '")');
 }
 
 
@@ -274,6 +381,7 @@ function alterarTarefaDB(tx) {
 	var tarefaAltPrazo = new String(document.getElementById('inputAlterarPrazo').value);
 	
 	tx.executeSql('UPDATE TAREFAS SET DESCRICAO = "' + tarefaAltDescricao + '", OBSERVACAO = "' + tarefaAltObservacao + '", PRAZO_FINAL = "' + tarefaAltPrazo + '" WHERE ID_TAREFA = "' + idTarAlt + '";');
+	tx.executeSql('INSERT INTO IDENTIFICADOR_PROJETO (ID_PROJETO) VALUES ("' + projetoAtualID + '")');
 	
 	atualizar = new String("alterarTarefa");
 	atualizarPagina();
@@ -325,28 +433,63 @@ function carregarProjetos() {
 }
 // CARREGAR TABELA-TELA PROJETO DB
 //=======================
-function carregarPrjDB(tx) {
+function carregarPrjDB(tx) {	
 	tx.executeSql('SELECT PROJETOS.ID_PROJETO AS IDP, PROJETOS.DESCRICAO DESP, PROJETOS.IDGRUPO, GRUPOS.DESCRICAO DESG FROM PROJETOS INNER JOIN GRUPOS ON PROJETOS.IDGRUPO = GRUPOS.ID_GRUPO', [], carregarPrjSuccess);
 }
 // CARREGAR TABELA-TELA PROJETO SUCESS
 //=======================
 function carregarPrjSuccess(tx, results) {
-	var len = results.rows.length;
-	if (len > 0) {
-		for (var i = 0; i < len; i++) {
-			$("#tabelaProjetos tbody").append("<tr>"
-									+ "<td><button type='button' class='btn btn-primary btn-xs' id='"
-									+results.rows.item(i).IDP+"' onclick='clickProjeto(this.id)'><span class='glyphicon glyphicon-pencil'></span></button></td>"
-									+ "<td>" + results.rows.item(i).DESP + "</td>"
-									+ "<td>" + results.rows.item(i).DESG + "</td>"
-									+ "<td><div class='btn-group'><button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarProjeto' id='"
-									+ results.rows.item(i).IDP
-									+ "' onclick='preencheAlterarP(this.id)'><span class='glyphicon glyphicon-edit'>"
-									+ "<button type='button' class='btn btn-danger btn-xs' id='"
-									+ results.rows.item(i).IDP
-									+ "' onclick='confirmaExcluirProjeto(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
+	//Função para que no momento que adicionar, excluir ou alterar uma tarefa, como a pagina dá refresh, chama essa 
+	//para que armazene o id selecionado no banco depois resgata o projetoAtualId com o valor regastado do banco
+	preencherSalvarTarefaProjeto();
+	
+	//if(projetoAtualID == 0 || projetoAtualID == undefined){		
+		$("#divTarefasProjetosPai").hide();
+		$("#divProjetosPai").show();				
+		var len = results.rows.length;
+		if (len > 0) {
+			for (var i = 0; i < len; i++) {
+				$("#tabelaProjetos tbody").append("<tr>"
+										+ "<td><button type='button' class='btn btn-primary btn-xs' id='"
+										+results.rows.item(i).IDP+"' onclick='clickProjeto(this.id)'><span class='glyphicon glyphicon-pencil'></span></button></td>"
+										+ "<td>" + results.rows.item(i).DESP + "</td>"
+										+ "<td>" + results.rows.item(i).DESG + "</td>"
+										+ "<td><div class='btn-group'><button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarProjeto' id='"
+										+ results.rows.item(i).IDP
+										+ "' onclick='preencheAlterarP(this.id)'><span class='glyphicon glyphicon-edit'>"
+										+ "<button type='button' class='btn btn-danger btn-xs' id='"
+										+ results.rows.item(i).IDP
+										+ "' onclick='confirmaExcluirProjeto(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
+			}
+		}		
+/*	}else{
+		//false porque ja fez o select no banco e já salvou o valor na variavel
+		salvarTarefaProjeto = false;
+		alert('SENAO')
+		$("#divProjetosPai").hide();
+		$("#divTarefasProjetosPai").show();
+		carregarTarefasDoProjetoDB();
+		var len = results.rows.length;
+		if (len > 0) {
+			for (var i = 0; i < len; i++) {
+				$("#tabelaTarefasProjeto tbody").append("<tr><td><button type='button' class='btn btn-primary btn-xs' onclick='checkTarefa'><span class='glyphicon glyphicon-ok'></span></button></td>"
+										+ "<td>" + results.rows.item(i).DESCRICAO + "</td>"
+										+ "<td>" + results.rows.item(i).PRAZO_FINAL + "</td>"
+										+ "<td>" + results.rows.item(i).ID_TAREFA + "</td>"
+										+ "<td>" + results.rows.item(i).IDPROJETO + "</td>"
+										+ "<td><div class='btn-group'>"
+										+ "<button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarTarefa' id='"
+										+ results.rows.item(i).ID_TAREFA
+										+ "' onclick='preencheAlterarT(this.id)'><span class='glyphicon glyphicon-edit'></span></button>"
+										+ "<button type='button' class='btn btn-danger btn-xs' id='"
+										+ results.rows.item(i).ID_TAREFA
+										+ "' onclick='confirmaExcluirTarefa(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
+			}
 		}
-	}
+		
+	}*/
+	
+	//preencherSalvarTarefaProjeto();
 }
 
 
@@ -552,7 +695,6 @@ function carregarGrpSuccess(tx, results) {
 			$("#tabelaGrupos tbody").append("<tr><td><input type='checkbox' value='"+results.rows.item(i).IDG+"'></td>"
 									+ "<td>"+results.rows.item(i).DESC+"</td>"
 									+ "<td></td>"
-									+ "<td>G-ID " +results.rows.item(i).IDG+"</td>"
 									+ "<td><button type='button' class='btn btn-danger btn-xs' id='"+results.rows.item(i).IDG+"'onclick='confirmaExcluirGrupo(this.id)'>"
 									+ "<span class='glyphicon glyphicon-trash'></span></button></td></tr>");
 		}
@@ -565,7 +707,7 @@ function carregarGrpSuccess(tx, results) {
 // =======================
 function inserirGrupo_Contato() {
 	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
-	db.transaction(inserirGrupo_ContatoDB, errorCB, successGrpContCB);
+	db.transaction(inserirGrupo_ContatoDB, errorCB);
 }
 //INSERIR GRUPO_CONTATO DB
 //=======================
@@ -634,8 +776,7 @@ function buscaSuccess(contacts) {
 			{
 				contactNumber = contacts[i].phoneNumbers[0].value;
 	
-				$("#tabelaContatos tbody").append("<tr><td>"+contacts[i].displayName+"</td>"
-										+ "<td>"+contactNumber+"</td>"
+				$("#tabelaContatos tbody").append("<tr><td>"+contacts[i].displayName+"</td><td>"+contactNumber+"</td>"
 										+ "<td><div class='btn-group'>" 
 										+ "<button type='button' class='btn btn-primary btn-xs' data-toggle='modal' data-target='#modalAlterarContato' id='"+contacts[i].id+"' onclick='preencheAlterarC(this.id)'><span class='glyphicon glyphicon-edit'>"
 										+ "<button type='button' class='btn btn-danger btn-xs' id='"+contacts[i].id+"' onclick='confirmaExcluirContato(this.id)'><span class='glyphicon glyphicon-trash'></span></button></div></td></tr>");
@@ -669,11 +810,11 @@ function excluirContato() {
 }
 //EXCLUIR CONTATO SUCCESS
 //=======================
+var idConAlt = '';
 function excluirSuccess(contacts) {
 	for (var i = 0; i < contacts.length; i++) {
 		if (idConEx == contacts[i].id) {
 			contacts[i].remove();
-			alert(contacts[i].id);
 		}
 	}
 	atualizar = new String("excluirContato");
@@ -684,7 +825,6 @@ function excluirSuccess(contacts) {
 
 // PREENCHER ALTERAR CONTATO-MODAL
 //=======================
-var idConAlt = '';
 function preencheAlterarC(idAltC) {
 	idConAlt = idAltC;
 	buscaContato();
@@ -803,7 +943,7 @@ function successPrjCB() {
 	navigator.notification.alert('Projeto salvo com sucesso');
 }
 function successGrpCB() {
-	navigator.notification.alert('Grupo salvo com sucesso');
+	//navigator.notification.alert('Grupo salvo com sucesso');
 }
 function successGrpContCB() {
 	navigator.notification.alert('Grupo e Contatos relacionados');
@@ -889,3 +1029,38 @@ function cadastrarUsuarioDB(tx) {
 	tx.executeSql('INSERT INTO CADASTRA_USUARIO (NOME, EMAIL, LOGIN, SENHA) VALUES ("'+nomeUsuario+'", "'+email+'", "'+login+'", "'+senha+'")');
 }
 
+
+
+// ***SELECT TELA INDEX
+// =======================
+function selectIndexDB() {
+	var db = window.openDatabase("Teste", "1.0", "Phonegap DB", 1000000);
+	db.transaction(queryIndexDB);
+}
+// TELA INDEX
+// =======================
+function queryIndexDB(tx) {
+	tx.executeSql('SELECT * FROM CADASTRO_USUARIO', [], querySuccessIndex,
+			errorCB);
+}
+// TELA INDEX
+// =======================
+function querySuccessIndex(tx, results) {
+	var len = results.rows.length;
+	navigator.notification.alert('Quantidade de Rows inseridas: ' + len);
+	if (len > 0) {
+		for (var i = 0; i < len; i++) {
+			navigator.notification.alert(' id: ' + results.rows.item(i).id
+					+ ' email: ' + results.rows.item(i).email + ' login: '
+					+ results.rows.item(i).login + ' senha: '
+					+ results.rows.item(i).senha);
+		}
+	}
+}
+
+// ***ConfiguraÃ§Ã£o do CONFIRM
+// =======================
+/*
+ * $.confirm.options = { text: "Tem certeza que deixa excluir?", title:
+ * "NOTIFICAO", confirmButton: "Ok", cancelButton: "Cancelar", post: false }
+ */
